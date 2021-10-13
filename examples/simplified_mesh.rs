@@ -12,7 +12,7 @@ use bevy_mod_raycast::{
 // with the mesh.
 
 fn main() {
-    App::new()
+    App::build()
         .insert_resource(WindowDescriptor {
             vsync: false, // We'll turn off vsync for this example, as it's a source of input lag.
             ..Default::default()
@@ -25,12 +25,12 @@ fn main() {
         // the positions of your meshes have been updated in the UPDATE stage.
         .add_system_to_stage(
             CoreStage::PreUpdate,
-            update_raycast_with_cursor.before(RaycastSystem::BuildRays),
+            update_raycast_with_cursor.system().before(RaycastSystem::BuildRays),
         )
-        .add_startup_system(setup_scene)
-        .add_startup_system(setup_ui)
-        .add_system(update_fps)
-        .add_system(manage_simplified_mesh)
+        .add_startup_system(setup_scene.system())
+        .add_startup_system(setup_ui.system())
+        .add_system(update_fps.system())
+        .add_system(manage_simplified_mesh.system())
         .run();
 }
 
@@ -64,17 +64,24 @@ fn setup_scene(
     commands
         .spawn_bundle(PbrBundle {
             // This is a very complex mesh that will be hard to raycast on
-            mesh: meshes.add(Mesh::from(shape::UVSphere {
+            mesh: meshes.add(Mesh::from(bevy::render::mesh::shape::Capsule {
+                // radius: 1.0,
+                // sectors: 1000,
+                // stacks: 1000,
+
                 radius: 1.0,
-                sectors: 1000,
-                stacks: 1000,
+                rings: 0,
+                depth: 1.0,
+                latitudes: 16,
+                longitudes: 32,
+                ..Default::default()
             })),
             material: materials.add(Color::rgb(1.0, 1.0, 1.0).into()),
             transform: Transform::from_translation(Vec3::new(0.0, 0.0, -5.0)),
             ..Default::default()
         })
         .insert(RayCastMesh::<MyRaycastSet>::default()); // Make this mesh ray cast-able
-    commands.spawn_bundle(PointLightBundle {
+    commands.spawn_bundle(LightBundle {
         transform: Transform::from_translation(Vec3::new(4.0, 8.0, 4.0)),
         ..Default::default()
     });
@@ -152,10 +159,10 @@ fn setup_ui(
         });
 }
 
-#[derive(Component)]
+// #[derive(Component)]
 struct SimplifiedStatus;
 
-#[derive(Component)]
+// #[derive(Component)]
 struct FpsText;
 
 // Insert or remove SimplifiedMesh component from the mesh being raycasted on.
@@ -167,11 +174,22 @@ fn manage_simplified_mesh(
     mut meshes: ResMut<Assets<Mesh>>,
 ) {
     if keyboard.just_pressed(KeyCode::Space) {
-        if let Ok((entity, ray)) = query.get_single() {
-            if let Ok(mut text) = status_query.get_single_mut() {
+        if let Ok((entity, ray)) = query.single() {
+            if let Ok(mut text) = status_query.single_mut() {
                 if ray.is_none() {
                     commands.entity(entity).insert(SimplifiedMesh {
-                        mesh: meshes.add(Mesh::from(shape::UVSphere::default())),
+                        mesh: meshes.add(Mesh::from(shape::Capsule {
+                            // radius: 1.0,
+                            // sectors: 1000,
+                            // stacks: 1000,
+            
+                            radius: 1.0,
+                            rings: 0,
+                            depth: 1.0,
+                            latitudes: 16,
+                            longitudes: 32,
+                            ..Default::default()
+                        })),
                     });
                     text.sections[1].value = "ON".to_string();
                     text.sections[1].style.color = Color::GREEN;

@@ -13,21 +13,21 @@ use bevy_mod_raycast::{
 // you would need to rotate the ray and recast it until it doesn't intersect with the obstacle.
 
 fn main() {
-    App::new()
+    App::build()
         .insert_resource(WindowDescriptor {
             vsync: false, // Disabled for this demo to remove vsync as a source of input latency
             ..Default::default()
         })
         .add_plugins(DefaultPlugins)
         .add_plugin(DefaultRaycastingPlugin::<Ground>::default())
-        .add_startup_system(setup)
-        .add_startup_system(setup_ui)
+        .add_startup_system(setup.system())
+        .add_startup_system(setup_ui.system())
         .add_system_to_stage(
             CoreStage::PreUpdate,
-            update_raycast_with_cursor.before(RaycastSystem::BuildRays),
+            update_raycast_with_cursor.system().before(RaycastSystem::BuildRays),
         )
-        .add_system(check_path)
-        .add_system(move_origin)
+        .add_system(check_path.system())
+        .add_system(move_origin.system())
         .run();
 }
 
@@ -79,19 +79,19 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
 }
 
 // Marker struct for the text
-#[derive(Component)]
+// #[derive(Component)]
 struct PathStatus;
 // Marker struct for the ground, used to get cursor position
-#[derive(Component)]
+// #[derive(Component)]
 struct Ground;
 // Marker struct for the path origin, shown by a yellow sphere
-#[derive(Component)]
+// #[derive(Component)]
 struct PathOrigin;
 // Marker struct for obstacles
-#[derive(Component)]
+// #[derive(Component)]
 struct PathObstacle;
 // Marker struct for the intersection point
-#[derive(Component)]
+// #[derive(Component)]
 struct PathObstaclePoint;
 
 fn setup(
@@ -162,7 +162,7 @@ fn setup(
         })
         .insert(PathObstaclePoint);
 
-    commands.spawn_bundle(PointLightBundle {
+    commands.spawn_bundle(LightBundle {
         transform: Transform::from_translation(Vec3::new(4.0, 8.0, 4.0)),
         ..Default::default()
     });
@@ -174,13 +174,13 @@ fn move_origin(
     to: Query<&RayCastSource<Ground>>,
     mouse_event: Res<Input<MouseButton>>,
 ) {
-    if let Ok(raycast_source) = to.get_single() {
+    if let Ok(raycast_source) = to.single() {
         if let Some(top_intersection) = raycast_source.intersect_top() {
             let mut new_position = top_intersection.1.position();
             new_position.y = 0.0;
 
             if mouse_event.just_pressed(MouseButton::Left) {
-                if let Ok(mut transform) = from.get_single_mut() {
+                if let Ok(mut transform) = from.single_mut() {
                     transform.translation = new_position;
                 }
             }
@@ -211,8 +211,8 @@ fn check_path(
         ),
     >,
 ) {
-    if let Ok(mut origin_transform) = from.get_single_mut() {
-        if let Ok(raycast_source) = to.get_single() {
+    if let Ok(mut origin_transform) = from.single_mut() {
+        if let Ok(raycast_source) = to.single() {
             if let Some(top_intersection) = raycast_source.intersect_top() {
                 let from = origin_transform.translation;
                 let to = top_intersection.1.position();
@@ -228,9 +228,9 @@ fn check_path(
                 }
 
                 let ray = Ray3d::new(from, ray_direction);
-                if let Ok(mut text) = status_query.get_single_mut() {
+                if let Ok(mut text) = status_query.single_mut() {
                     if let Ok((mut intersection_transform, mut visible)) =
-                        intersection_point.get_single_mut()
+                        intersection_point.single_mut()
                     {
                         // Set everything as OK in case there are no obstacle in path
                         text.sections[1].value = "Direct!".to_string();

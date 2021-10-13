@@ -22,21 +22,25 @@ use std::sync::{Arc, Mutex};
 
 pub struct DefaultRaycastingPlugin<T: 'static + Send + Sync>(pub PhantomData<T>);
 impl<T: 'static + Send + Sync> Plugin for DefaultRaycastingPlugin<T> {
-    fn build(&self, app: &mut App) {
+    fn build(&self, app: &mut AppBuilder) {
         app.init_resource::<PluginState<T>>()
             .add_system_to_stage(
                 CoreStage::PreUpdate,
-                build_rays::<T>.label(RaycastSystem::BuildRays),
+                build_rays::<T>
+                    .system()
+                    .label(RaycastSystem::BuildRays),
             )
             .add_system_to_stage(
                 CoreStage::PreUpdate,
                 update_raycast::<T>
+                    .system()
                     .label(RaycastSystem::UpdateRaycast)
                     .after(RaycastSystem::BuildRays),
             )
             .add_system_to_stage(
                 CoreStage::PreUpdate,
                 update_debug_cursor::<T>
+                    .system()
                     .label(RaycastSystem::UpdateDebugCursor)
                     .after(RaycastSystem::UpdateRaycast),
             );
@@ -56,7 +60,7 @@ pub enum RaycastSystem {
 }
 
 /// Global plugin state used to enable or disable all ray casting for a given type T.
-#[derive(Component)]
+// #[derive(Component)]
 pub struct PluginState<T> {
     pub enabled: bool,
     _marker: PhantomData<T>,
@@ -75,7 +79,7 @@ impl<T> Default for PluginState<T> {
 /// # Requirements
 ///
 /// The marked entity must also have a [Mesh] component.
-#[derive(Component, Debug)]
+#[derive(Debug)]
 pub struct RayCastMesh<T> {
     _marker: PhantomData<T>,
 }
@@ -91,7 +95,7 @@ impl<T> Default for RayCastMesh<T> {
 /// The `RayCastSource` component is used to generate rays with the specified `cast_method`. A `ray`
 /// is generated when the RayCastSource is initialized, either by waiting for update_raycast system
 /// to process the ray, or by using a `with_ray` function.
-#[derive(Component)]
+// #[derive(Component)]
 pub struct RayCastSource<T> {
     pub cast_method: RayCastMethod,
     ray: Option<Ray3d>,
@@ -628,7 +632,7 @@ impl TriangleTrait for Triangle {
     }
 }
 
-#[derive(Component)]
+// #[derive(Component)]
 pub struct SimplifiedMesh {
     pub mesh: Handle<Mesh>,
 }

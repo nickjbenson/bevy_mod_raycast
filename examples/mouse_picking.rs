@@ -8,7 +8,7 @@ use bevy_mod_raycast::{
 // looking for a more fully-featured mouse picking plugin, try out bevy_mod_picking.
 
 fn main() {
-    App::new()
+    App::build()
         .insert_resource(WindowDescriptor {
             vsync: false, // We'll turn off vsync for this example, as it's a source of input lag.
             ..Default::default()
@@ -20,9 +20,9 @@ fn main() {
         // the positions of your meshes have been updated in the UPDATE stage.
         .add_system_to_stage(
             CoreStage::PreUpdate,
-            update_raycast_with_cursor.before(RaycastSystem::BuildRays),
+            update_raycast_with_cursor.system().before(RaycastSystem::BuildRays),
         )
-        .add_startup_system(setup)
+        .add_startup_system(setup.system())
         .run();
 }
 
@@ -61,7 +61,7 @@ fn setup(
             ..Default::default()
         })
         .insert(RayCastMesh::<MyRaycastSet>::default()); // Make this mesh ray cast-able
-    commands.spawn_bundle(PointLightBundle {
+    commands.spawn_bundle(LightBundle {
         transform: Transform::from_translation(Vec3::new(4.0, 8.0, 4.0)),
         ..Default::default()
     });
