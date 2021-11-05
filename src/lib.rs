@@ -55,17 +55,38 @@ pub enum RaycastSystem {
     UpdateDebugCursor,
 }
 
+pub struct RaycastDebugSettings {
+    pub draw_cursor_hit: bool
+}
+impl Default for RaycastDebugSettings {
+    fn default() -> Self {
+        Self {
+            draw_cursor_hit: false
+        }
+    }
+}
+
 /// Global plugin state used to enable or disable all ray casting for a given type T.
 #[derive(Component)]
 pub struct PluginState<T> {
     pub enabled: bool,
+    pub debug_settings: RaycastDebugSettings,
     _marker: PhantomData<T>,
 }
 impl<T> Default for PluginState<T> {
     fn default() -> Self {
         PluginState {
             enabled: true,
+            debug_settings: Default::default(),
             _marker: PhantomData::<T>::default(),
+        }
+    }
+}
+impl<T> PluginState<T> {
+    pub fn new(debug_settings: RaycastDebugSettings) -> PluginState<T> {
+        PluginState::<T> {
+            debug_settings,
+            ..Default::default()
         }
     }
 }

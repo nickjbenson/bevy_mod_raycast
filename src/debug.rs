@@ -1,4 +1,4 @@
-use crate::{PluginState, RayCastSource};
+use crate::{PluginState, RayCastSource, RaycastDebugSettings};
 use bevy::prelude::*;
 use std::marker::PhantomData;
 
@@ -56,6 +56,9 @@ pub fn update_debug_cursor<T: 'static + Send + Sync>(
     raycast_source_query: Query<&RayCastSource<T>>,
 ) {
     if !state.enabled {
+        return;
+    }
+    if !state.debug_settings.draw_cursor_hit {
         return;
     }
 
